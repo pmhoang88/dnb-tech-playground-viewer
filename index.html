@@ -89,7 +89,7 @@
 <body>
 <div id="app"></div>
 <div class="hud" id="title">d&amp;b Tech Playground</div>
-<div class="hud" id="hint">drag to orbit &middot; scroll / pinch to zoom</div>
+<div class="hud" id="hint">drag to orbit &middot; right-drag / two-finger / arrow keys to pan &middot; scroll / pinch to zoom</div>
 <div id="tools">
   <div class="btn" id="shotFull">Screenshot</div>
   <div class="btn" id="shotArea">Select area</div>
@@ -116,7 +116,9 @@ const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 5
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.enablePan = false;
+controls.enablePan = true;
+controls.screenSpacePanning = true;
+controls.listenToKeyEvents(window);
 controls.minDistance = 0.1;
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x33404d, 1.2));
