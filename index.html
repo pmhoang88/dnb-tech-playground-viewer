@@ -20,6 +20,16 @@
     letter-spacing: .1em; background: #0d0f12; transition: opacity .5s; z-index: 50;
   }
   #tools { position: fixed; top: 14px; right: 14px; display: flex; gap: 8px; z-index: 10; }
+  #layers {
+    position: fixed; top: 52px; right: 14px; width: 215px; max-height: 62vh; overflow-y: auto;
+    background: rgba(18,20,24,.92); border: 1px solid #3a3d42; border-radius: 10px;
+    padding: 10px 12px; display: none; z-index: 20; backdrop-filter: blur(8px);
+    font: 12px/1.9 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #cfd2d6;
+  }
+  #layers.open { display: block; }
+  #layers .lr { display: flex; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer; }
+  #layers .lr input { accent-color: #4a83f1; margin: 0; }
+  #layers .lhead { font-size: 10px; letter-spacing: .12em; opacity: .5; text-transform: uppercase; margin-bottom: 4px; }
   .btn {
     pointer-events: auto; cursor: pointer; user-select: none;
     background: rgba(28,30,34,.85); color: #d7d9dd; border: 1px solid #3a3d42;
@@ -83,7 +93,9 @@
 <div id="tools">
   <div class="btn" id="shotFull">Screenshot</div>
   <div class="btn" id="shotArea">Select area</div>
+  <div class="btn" id="layersBtn">Layers</div>
 </div>
+<div id="layers"><div class="lhead">Layers</div></div>
 <div id="loading">LOADING MODEL&hellip;</div>
 <script type="module">
 import * as THREE from 'three';
@@ -118,6 +130,7 @@ scene.add(fill);
 new GLTFLoader().load('model.glb', (gltf) => {
   const model = gltf.scene;
   scene.add(model);
+  buildLayers(model);
 
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
@@ -149,6 +162,52 @@ renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
 });
+
+window.__dbg = { THREE, scene, camera, controls, renderer };
+
+/* ---------- layers (SketchUp tags) ---------- */
+
+// tag names as in the .skp file; last entry hidden by default to reveal the carpet under the concrete slab
+const LAYER_TAGS = ['10_Floors','11_Ballroom_Carpet','20_Ballroom_Walls','20b_Ballroom_Doors','21_Gold_Band','21b_Wall_Panels','26_AV_Speakers','30_Service','40_Side_Foyer','42_Shelf','50_Foyer_Walls','51_Foyer_Openings','54_Foyer_Columns','60_Meeting_Walls','61_Song_Da','61_Song_Thao','61_Song_Lo','65_Restrooms','70_Stairwell','80_Furniture','FUR_Banquet_Thao','FUR_Lounge','Furniture','G&H gulv','TP_Zones','TP_Vai_Den','TP_Loi_Vao','TP_San'];
+const LAYERS_DEFAULT_OFF = new Set(['TP_San']);
+const _norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+function buildLayers(model) {
+  const tagNorm = LAYER_TAGS.map(t => ({ name: t, n: _norm(t) }))
+    .sort((a, b) => b.n.length - a.n.length);
+  const claimed = new Map(); // tag name -> Set(node)
+
+  (function walk(o, underClaim) {
+    const nm = _norm(o.name);
+    const tag = !underClaim && nm.length >= 3 &&
+      tagNorm.find(t => nm === t.n || nm.startsWith(t.n));
+    if (tag) {
+      if (!claimed.has(tag.name)) claimed.set(tag.name, new Set());
+      claimed.get(tag.name).add(o);
+      underClaim = true;
+    }
+    o.children.forEach(c => walk(c, underClaim));
+  })(model, false);
+
+  const panel = document.getElementById('layers');
+  const tris = o => { let t = 0; o.traverse(m => { if (m.isMesh && m.geometry?.index) t += m.geometry.index.count / 3; }); return t; };
+
+  for (const tag of LAYER_TAGS) {
+    const nodes = claimed.get(tag);
+    if (!nodes || ![...nodes].some(n => tris(n) > 0)) continue;
+    const on = !LAYERS_DEFAULT_OFF.has(tag);
+    const row = document.createElement('label');
+    row.className = 'lr';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = on;
+    cb.onchange = () => nodes.forEach(n => n.visible = cb.checked);
+    row.append(cb, document.createTextNode(tag));
+    panel.appendChild(row);
+    if (!on) nodes.forEach(n => n.visible = false);
+  }
+}
+document.getElementById('layersBtn').onclick = () =>
+  document.getElementById('layers').classList.toggle('open');
 
 /* ---------- screenshot ---------- */
 
