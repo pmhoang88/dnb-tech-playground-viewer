@@ -174,8 +174,8 @@ window.__dbg = { THREE, scene, camera, controls, renderer };
 /* ---------- layers (SketchUp tags) ---------- */
 
 // tag names as in the .skp file; groups hidden in the saved SketchUp view stay off by default
-const LAYER_TAGS = ['10_Floors','11_Ballroom_Carpet','20_Ballroom_Walls','20b_Ballroom_Doors','21_Gold_Band','21b_Wall_Panels','22_Partition_Tracks','23_Stage_End','24_Ballroom_Ceiling','25_Light_Bar','26_AV_Speakers','30_Service','40_Side_Foyer','41_SF_Ceiling','42_Shelf','50_Foyer_Walls','51_Foyer_Openings','53_Foyer_Ceiling','54_Foyer_Columns','60_Meeting_Walls','61_Song_Da','61_Song_Thao','61_Song_Lo','65_Restrooms','70_Stairwell','80_Furniture','90_Labels','FUR_Banquet_Thao','FUR_Lounge','FUR_Tables_Classroom','FUR_Chairs_Classroom','Furniture','G&H gulv','TP_Studio1','TP_Stations','TP_Loa','TP_Bar','TP_Truss','TP_Loi_Vao','TP_Zones','TP_San','TP_Vai_Den','FOH','CabinetsSUBArray','CabinetsMainArray','Frames','CabinetsMainArray_R','Frames_R','CabinetsMainArray_L','Frames_L'];
-const LAYERS_DEFAULT_OFF = new Set(['11_Ballroom_Carpet','22_Partition_Tracks','23_Stage_End','24_Ballroom_Ceiling','25_Light_Bar','41_SF_Ceiling','53_Foyer_Ceiling','90_Labels','FUR_Tables_Classroom','FUR_Chairs_Classroom']);
+const LAYER_TAGS = ['FOH','CabinetsSUBArray','CabinetsMainArray','Frames','CabinetsMainArray_R','Frames_R','CabinetsMainArray_L','Frames_L'];
+const LAYERS_DEFAULT_OFF = new Set();
 const _norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 function buildLayers(model) {
