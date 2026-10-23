@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -17,8 +17,55 @@
   #loading {
     position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #9a9da3; font: 13px -apple-system, "Helvetica Neue", Arial, sans-serif;
-    letter-spacing: .1em; background: #0d0f12; transition: opacity .5s;
+    letter-spacing: .1em; background: #0d0f12; transition: opacity .5s; z-index: 50;
   }
+  #tools { position: fixed; top: 14px; right: 14px; display: flex; gap: 8px; z-index: 10; }
+  .btn {
+    pointer-events: auto; cursor: pointer; user-select: none;
+    background: rgba(28,30,34,.85); color: #d7d9dd; border: 1px solid #3a3d42;
+    border-radius: 8px; padding: 7px 12px;
+    font: 12px/1 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; letter-spacing: .04em;
+    backdrop-filter: blur(6px);
+  }
+  .btn:hover { background: rgba(50,53,60,.9); color: #fff; }
+  .btn.on { background: #2f6fed; border-color: #2f6fed; color: #fff; }
+  .btn.primary { background: #2f6fed; border-color: #2f6fed; color: #fff; }
+  .btn.primary:hover { background: #4a83f1; }
+
+  /* area-select overlay */
+  #sel { position: fixed; inset: 0; cursor: crosshair; z-index: 60; background: rgba(0,0,0,.25); }
+  #selBox { position: fixed; border: 1.5px dashed #4a83f1; background: rgba(74,131,241,.12); display: none; }
+  .sel-tip {
+    position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+    color: #cfd2d6; font: 12px -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: rgba(20,22,25,.85); padding: 8px 14px; border-radius: 8px; letter-spacing: .04em;
+  }
+
+  /* annotation editor */
+  #anno { position: fixed; inset: 0; z-index: 70; background: #07080a; display: flex; flex-direction: column; }
+  #annoBar {
+    display: flex; gap: 8px; align-items: center; justify-content: center;
+    padding: 12px; flex-wrap: wrap;
+  }
+  #annoBar .sep { width: 1px; height: 20px; background: #3a3d42; margin: 0 4px; }
+  .sw {
+    width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; outline: 1px solid #3a3d42;
+  }
+  .sw.on { border-color: #fff; }
+  #annoStage { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  #annoWrap { position: relative; box-shadow: 0 0 0 1px #2a2d31; }
+  #annoImg, #annoDraw { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #annoDraw { touch-action: none; }
+  #annoTexts { position: absolute; inset: 0; pointer-events: none; }
+  .note {
+    position: absolute; pointer-events: auto; cursor: grab;
+    min-width: 40px; padding: 5px 8px; white-space: pre;
+    font: 16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    outline: 1px dashed rgba(255,255,255,.35); border-radius: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  }
+  .note:focus { outline: 1.5px solid #4a83f1; cursor: text; }
 </style>
 <script type="importmap">
 {
@@ -32,15 +79,19 @@
 <body>
 <div id="app"></div>
 <div class="hud" id="title">d&amp;b Tech Playground</div>
-<div class="hud" id="hint">kéo để xoay &middot; cuộn / pinch để zoom</div>
-<div id="loading">ĐANG TẢI MÔ HÌNH&hellip;</div>
+<div class="hud" id="hint">drag to orbit &middot; scroll / pinch to zoom</div>
+<div id="tools">
+  <div class="btn" id="shotFull">Screenshot</div>
+  <div class="btn" id="shotArea">Select area</div>
+</div>
+<div id="loading">LOADING MODEL&hellip;</div>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const app = document.getElementById('app');
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -85,7 +136,7 @@ new GLTFLoader().load('model.glb', (gltf) => {
   el.style.opacity = '0';
   setTimeout(() => el.remove(), 600);
 }, undefined, () => {
-  document.getElementById('loading').textContent = 'KHÔNG TẢI ĐƯỢC MÔ HÌNH';
+  document.getElementById('loading').textContent = 'FAILED TO LOAD MODEL';
 });
 
 addEventListener('resize', () => {
@@ -98,6 +149,220 @@ renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
 });
+
+/* ---------- screenshot ---------- */
+
+const el = (tag, id) => { const e = document.createElement(tag); if (id) e.id = id; return e; };
+const PR = () => renderer.getPixelRatio();
+
+function snap() {
+  renderer.render(scene, camera);
+  const c = el('canvas');
+  c.width = renderer.domElement.width;
+  c.height = renderer.domElement.height;
+  c.getContext('2d').drawImage(renderer.domElement, 0, 0);
+  return c;
+}
+
+document.getElementById('shotFull').onclick = () => openAnnotator(snap());
+document.getElementById('shotArea').onclick = () => {
+  const ov = el('div', 'sel');
+  ov.innerHTML = '<div class="sel-tip">Drag to select an area &middot; Esc to cancel</div>';
+  const box = el('div', 'selBox');
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+
+  let x0, y0, x1, y1, drag = false;
+  const upd = () => box.style.cssText =
+    `display:block;left:${Math.min(x0,x1)}px;top:${Math.min(y0,y1)}px;` +
+    `width:${Math.abs(x1-x0)}px;height:${Math.abs(y1-y0)}px`;
+  ov.onpointerdown = e => {
+    x0 = x1 = e.clientX; y0 = y1 = e.clientY; drag = true;
+    ov.setPointerCapture(e.pointerId); upd();
+  };
+  ov.onpointermove = e => { if (drag) { x1 = e.clientX; y1 = e.clientY; upd(); } };
+  ov.onpointerup = () => {
+    if (!drag) return;
+    ov.remove(); removeEventListener('keydown', esc);
+    const x = Math.min(x0,x1), y = Math.min(y0,y1), w = Math.abs(x1-x0), h = Math.abs(y1-y0);
+    if (w < 10 || h < 10) return;
+    const full = snap(), c = el('canvas'), pr = PR();
+    c.width = Math.round(w * pr); c.height = Math.round(h * pr);
+    c.getContext('2d').drawImage(full, x*pr, y*pr, c.width, c.height, 0, 0, c.width, c.height);
+    openAnnotator(c);
+  };
+  const esc = e => { if (e.key === 'Escape') { ov.remove(); removeEventListener('keydown', esc); } };
+  addEventListener('keydown', esc);
+};
+
+/* ---------- annotation editor ---------- */
+
+const COLORS = ['#ff453a', '#ffd60a', '#32d74b', '#0a84ff', '#ffffff', '#000000'];
+const FONT_CSS = '16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+const FONT_PX = 16, PAD_X = 8, PAD_Y = 5, LINE = 1.35;
+
+function openAnnotator(src) {
+  const ov = el('div', 'anno');
+  const stage = el('div', 'annoStage');
+  const wrap = el('div', 'annoWrap');
+  const imgC = el('canvas', 'annoImg');
+  const drawC = el('canvas', 'annoDraw');
+  const texts = el('div', 'annoTexts');
+  const bar = el('div', 'annoBar');
+
+  const fit = Math.min((innerWidth - 60) / src.width, (innerHeight - 110) / src.height, 1);
+  const dw = Math.round(src.width * fit), dh = Math.round(src.height * fit);
+  const k = src.width / dw; // css px -> device px
+
+  wrap.style.width = dw + 'px'; wrap.style.height = dh + 'px';
+  imgC.width = drawC.width = src.width;
+  imgC.height = drawC.height = src.height;
+  imgC.getContext('2d').drawImage(src, 0, 0);
+  const dctx = drawC.getContext('2d');
+  dctx.setTransform(k, 0, 0, k, 0, 0);
+  dctx.lineCap = dctx.lineJoin = 'round';
+
+  wrap.append(imgC, drawC, texts);
+  stage.appendChild(wrap);
+  ov.append(bar, stage);
+  document.body.appendChild(ov);
+
+  let mode = 'pen', color = COLORS[0], drawing = false, stroke = null;
+  const history = []; // {type:'stroke',data} | {type:'note',el}
+
+  const bPen = mkBtn('Pen', () => setMode('pen'));
+  const bText = mkBtn('Text', () => setMode('text'));
+  const bUndo = mkBtn('Undo', undo);
+  const bSave = mkBtn('Save PNG', save, 'primary');
+  const bClose = mkBtn('Close', () => ov.remove());
+  const sws = COLORS.map((c, i) => {
+    const s = el('div'); s.className = 'sw' + (i === 0 ? ' on' : '');
+    s.style.background = c;
+    s.onclick = () => { color = c; sws.forEach(x => x.classList.remove('on')); s.classList.add('on');
+      const n = document.activeElement; if (n?.classList?.contains('note')) n.style.color = c; };
+    return s;
+  });
+  bar.append(bPen, bText, sep(), ...sws, sep(), bUndo, sep(), bSave, bClose);
+  function mkBtn(t, fn, cls) { const b = el('div'); b.className = 'btn ' + (cls||''); b.textContent = t; b.onclick = fn; return b; }
+  function sep() { const s = el('div'); s.className = 'sep'; return s; }
+  function setMode(m) { mode = m; bPen.classList.toggle('on', m === 'pen'); bText.classList.toggle('on', m === 'text');
+    drawC.style.cursor = m === 'pen' ? 'crosshair' : 'text'; }
+  setMode('pen');
+
+  const pos = e => {
+    const r = drawC.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  };
+
+  function replay() {
+    dctx.clearRect(0, 0, drawC.width, drawC.height);
+    for (const h of history) if (h.type === 'stroke') paint(h.data);
+  }
+  function paint(s) {
+    dctx.strokeStyle = s.color; dctx.lineWidth = s.w;
+    dctx.beginPath();
+    s.pts.forEach(([x, y], i) => i ? dctx.lineTo(x, y) : dctx.moveTo(x, y));
+    dctx.stroke();
+  }
+
+  drawC.onpointerdown = e => {
+    if (mode === 'text') { addNote(...pos(e)); return; }
+    drawing = true; stroke = { color, w: 2.5, pts: [pos(e)] };
+    drawC.setPointerCapture(e.pointerId);
+    paint(stroke);
+  };
+  drawC.onpointermove = e => {
+    if (!drawing) return;
+    stroke.pts.push(pos(e)); paint(stroke);
+  };
+  drawC.onpointerup = () => {
+    if (!drawing) return;
+    drawing = false; history.push({ type: 'stroke', data: stroke }); stroke = null;
+  };
+
+  function addNote(x, y) {
+    const n = el('div'); n.className = 'note';
+    n.style.left = x + 'px'; n.style.top = y + 'px';
+    n.style.color = color; n.style.font = FONT_CSS;
+    texts.appendChild(n);
+    history.push({ type: 'note', el: n });
+
+    let sx, sy, ox, oy, moved;
+    n.onpointerdown = e => {
+      if (e.target !== n) return;
+      sx = e.clientX; sy = e.clientY; ox = n.offsetLeft; oy = n.offsetTop; moved = false;
+      n.setPointerCapture(e.pointerId);
+    };
+    n.onpointermove = e => {
+      if (sx === undefined) return;
+      if (!moved && Math.hypot(e.clientX - sx, e.clientY - sy) > 4) {
+        moved = true; n.blur(); n.contentEditable = 'false';
+      }
+      if (moved) {
+        n.style.left = Math.max(0, Math.min(ox + e.clientX - sx, dw - 20)) + 'px';
+        n.style.top = Math.max(0, Math.min(oy + e.clientY - sy, dh - 20)) + 'px';
+      }
+    };
+    n.onpointerup = () => {
+      if (sx === undefined) return;
+      sx = undefined;
+      if (!moved) {
+        n.contentEditable = 'true'; n.focus();
+        const r = document.createRange(); r.selectNodeContents(n); r.collapse(false);
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      }
+    };
+    n.onblur = () => { n.contentEditable = 'false'; if (!n.innerText.trim()) remove(n); };
+    n.onpaste = e => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); };
+    n.onkeydown = e => { if (e.key === 'Escape') n.blur(); e.stopPropagation(); };
+
+    n.contentEditable = 'true'; n.focus();
+  }
+
+  function remove(n) {
+    const i = history.findIndex(h => h.el === n);
+    if (i >= 0) history.splice(i, 1);
+    n.remove();
+  }
+  function undo() {
+    const h = history.pop();
+    if (!h) return;
+    if (h.type === 'note') h.el.remove(); else replay();
+  }
+  function save() {
+    const out = el('canvas'); out.width = src.width; out.height = src.height;
+    const c = out.getContext('2d');
+    c.drawImage(src, 0, 0);
+    c.drawImage(drawC, 0, 0);
+    c.font = `${FONT_PX * k}px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
+    c.textBaseline = 'middle';
+    for (const h of history) {
+      if (h.type !== 'note') continue;
+      const n = h.el;
+      c.fillStyle = getComputedStyle(n).color;
+      n.innerText.split('\n').forEach((line, i) => {
+        const x = (n.offsetLeft + PAD_X) * k;
+        const y = (n.offsetTop + PAD_Y + (i + 0.5) * FONT_PX * LINE) * k;
+        c.fillText(line, x, y);
+      });
+    }
+    out.toBlob(b => {
+      const a = el('a'), t = new Date();
+      a.href = URL.createObjectURL(b);
+      a.download = `screenshot-${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}-` +
+                   `${String(t.getHours()).padStart(2,'0')}${String(t.getMinutes()).padStart(2,'0')}${String(t.getSeconds()).padStart(2,'0')}.png`;
+      a.click(); URL.revokeObjectURL(a.href);
+      bSave.textContent = 'Saved'; setTimeout(() => bSave.textContent = 'Save PNG', 1500);
+    });
+  }
+
+  const esc = e => {
+    if (e.key !== 'Escape') return;
+    if (document.activeElement?.classList?.contains('note')) document.activeElement.blur();
+    else { ov.remove(); removeEventListener('keydown', esc); }
+  };
+  addEventListener('keydown', esc);
+}
 </script>
 </body>
 </html>
