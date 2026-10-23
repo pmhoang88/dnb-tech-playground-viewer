@@ -76,6 +76,16 @@
     text-shadow: 0 1px 2px rgba(0,0,0,.6);
   }
   .note:focus { outline: 1.5px solid #4a83f1; cursor: text; }
+
+  /* SketchUp annotation overlay (dimensions + room labels) */
+  #annoOverlay { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
+  .annoLbl {
+    position: absolute; transform: translate(-50%, -50%); white-space: nowrap;
+    font: 600 11px/1 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    padding: 2px 5px; border-radius: 3px;
+  }
+  .annoLbl.dim { color: #ffb547; background: rgba(10,10,12,.55); }
+  .annoLbl.room { color: rgba(230,233,238,.82); background: rgba(10,10,12,.38); letter-spacing: .06em; }
 </style>
 <script type="importmap">
 {
@@ -96,6 +106,7 @@
   <div class="btn" id="layersBtn">Layers</div>
 </div>
 <div id="layers"><div class="lhead">Layers</div></div>
+<div id="annoOverlay"></div>
 <div id="loading">LOADING MODEL&hellip;</div>
 <script type="module">
 import * as THREE from 'three';
@@ -136,7 +147,9 @@ gltfLoader.setDRACOLoader(new DRACOLoader()
 gltfLoader.load('model.glb', (gltf) => {
   const model = gltf.scene;
   scene.add(model);
+  styleSpeakerBlocks(model);
   buildLayers(model);
+  buildAnnotations();
 
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
@@ -167,9 +180,102 @@ addEventListener('resize', () => {
 renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
+  updateAnnoLabels();
 });
 
 window.__dbg = { THREE, scene, camera, controls, renderer };
+
+/* ---------- SketchUp annotations (dimensions + room labels) ----------
+   The .skp contains DimensionLinear + Text entities that glTF drops.
+   Positions below are exported from SketchUp (inches, z-up) converted to
+   world meters (x, z, -y). */
+
+const SU_ANNOT = {
+  dims: [
+    { t: '5,8222 m', a: [24.0249,5.8222,-5.0017], b: [24.0249,0.0,-5.0017], o: [0,0,-2.0405] },
+    { t: '5,0237 m', a: [24.9763,0,-4.35],        b: [29.9999,0,-4.35],      o: [0,0,-0.3766] },
+    { t: '2,5405 m', a: [23.89,0,-8.17],          b: [23.89,0,-5.6295],      o: [0.2714,0,0] },
+    { t: '2,0200 m', a: [27.9301,0.012,4.2794],   b: [29.9499,0.012,4.2794], o: [0,0,-1.2622] },
+    { t: '1,4808 m', a: [19.2121,0,7.9192],       b: [19.2121,0,9.4],        o: [0.5127,0,0] },
+    { t: '4,2578 m', a: [24.656,4.2578,4.7156],   b: [24.656,0,4.7156],      o: [-2.4257,0,0] },
+    { t: '10,0019 m',a: [24.0138,5.901,5.001],    b: [24.0138,5.901,-5.001], o: [-5.2934,0,0] }
+  ],
+  labels: [
+    { t: 'SONG HONG 3',    p: [5.0,0.15,-9.5] },
+    { t: 'SONG HONG 2',    p: [15.0,0.15,-9.5] },
+    { t: 'SONG HONG 1',    p: [25.0,0.15,-9.5] },
+    { t: 'BALLROOM FOYER', p: [17.0,0.15,5.0] },
+    { t: 'SIDE FOYER',     p: [33.5,0.15,-12.0] },
+    { t: 'SONG DA',        p: [41.0,0.15,-4.0] },
+    { t: 'SONG THAO',      p: [41.0,0.15,-12.0] },
+    { t: 'SONG LO',        p: [41.0,0.15,-18.25] },
+    { t: 'WC',             p: [39.5,0.15,-23.0] },
+    { t: 'SERVICE',        p: [15.0,0.15,-21.5] },
+    { t: 'STAIR',          p: [41.0,0.15,5.0] }
+  ]
+};
+
+const annoGroup = new THREE.Group();
+const annoLabels = []; // {el, wp:Vector3, cls, text}
+scene.add(annoGroup);
+
+function buildAnnotations() {
+  const pts = [];
+  const V = a => new THREE.Vector3(...a);
+  for (const d of SU_ANNOT.dims) {
+    const a = V(d.a), b = V(d.b), o = V(d.o);
+    const a2 = a.clone().add(o), b2 = b.clone().add(o);   // dim line endpoints
+    pts.push(a, a2, b, b2, a2, b2);
+    addAnnoLabel(d.t, a2.clone().lerp(b2, 0.5), 'dim');
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  annoGroup.add(new THREE.LineSegments(geo,
+    new THREE.LineBasicMaterial({ color: 0xffb547, depthTest: true })));
+  for (const l of SU_ANNOT.labels) addAnnoLabel(l.t, V(l.p), 'room');
+}
+
+function addAnnoLabel(text, wp, cls) {
+  const d = document.createElement('div');
+  d.className = 'annoLbl ' + cls;
+  d.textContent = text;
+  document.getElementById('annoOverlay').appendChild(d);
+  annoLabels.push({ el: d, wp, cls, text });
+}
+
+const _pv = new THREE.Vector3();
+function updateAnnoLabels() {
+  if (!annoLabels.length) return;
+  const on = annoGroup.visible;
+  for (const l of annoLabels) {
+    if (!on) { l.el.style.display = 'none'; continue; }
+    _pv.copy(l.wp).project(camera);
+    if (_pv.z > 1 || _pv.z < -1) { l.el.style.display = 'none'; continue; }
+    l.el.style.display = 'block';
+    l.el.style.left = (_pv.x * 0.5 + 0.5) * innerWidth + 'px';
+    l.el.style.top = (-_pv.y * 0.5 + 0.5) * innerHeight + 'px';
+  }
+}
+
+/* ---------- speaker blocks: material + edges ----------
+   The flown arrays arrive from ArrayCalc as plain gray solids with no
+   material. Give them a dark cabinet material and edge lines so the
+   stepped array profile reads like real speaker hangs. */
+
+function styleSpeakerBlocks(model) {
+  const cabMat = new THREE.MeshStandardMaterial({
+    color: 0x2b2c30, roughness: 0.72, metalness: 0.18, side: THREE.DoubleSide
+  });
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x8a8f98 });
+  model.traverse(o => {
+    if (!o.isMesh) return;
+    let p = o, ok = false;
+    while (p) { if (/cabinets|frames/i.test(p.name || '')) { ok = true; break; } p = p.parent; }
+    if (!ok) return;
+    o.material = cabMat;
+    const eg = new THREE.EdgesGeometry(o.geometry, 20);
+    o.add(new THREE.LineSegments(eg, edgeMat));
+  });
+}
 
 /* ---------- layers (SketchUp tags) ---------- */
 
@@ -211,6 +317,14 @@ function buildLayers(model) {
     panel.appendChild(row);
     if (!on) nodes.forEach(n => n.visible = false);
   }
+
+  const row = document.createElement('label');
+  row.className = 'lr';
+  const cb = document.createElement('input');
+  cb.type = 'checkbox'; cb.checked = true;
+  cb.onchange = () => annoGroup.visible = cb.checked;
+  row.append(cb, document.createTextNode('Annotations'));
+  panel.appendChild(row);
 }
 document.getElementById('layersBtn').onclick = () =>
   document.getElementById('layers').classList.toggle('open');
@@ -225,7 +339,22 @@ function snap() {
   const c = el('canvas');
   c.width = renderer.domElement.width;
   c.height = renderer.domElement.height;
-  c.getContext('2d').drawImage(renderer.domElement, 0, 0);
+  const ctx = c.getContext('2d');
+  ctx.drawImage(renderer.domElement, 0, 0);
+  // draw SketchUp annotation labels into the capture (they are HTML overlays)
+  if (annoGroup.visible) {
+    const pr = PR();
+    ctx.font = `600 ${Math.round(11 * pr)}px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const l of annoLabels) {
+      _pv.copy(l.wp).project(camera);
+      if (_pv.z > 1 || _pv.z < -1) continue;
+      const x = (_pv.x * 0.5 + 0.5) * c.width, y = (-_pv.y * 0.5 + 0.5) * c.height;
+      const isDim = l.cls === 'dim';
+      ctx.fillStyle = isDim ? '#ffb547' : 'rgba(230,233,238,.85)';
+      ctx.fillText(l.text, x, y);
+    }
+  }
   return c;
 }
 
