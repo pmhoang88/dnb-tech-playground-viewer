@@ -20,6 +20,10 @@
     letter-spacing: .1em; background: #0d0f12; transition: opacity .5s; z-index: 50;
   }
   #tools { position: fixed; top: 14px; right: 14px; display: flex; gap: 8px; z-index: 10; }
+  #viewbar {
+    position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 10;
+  }
   #layers {
     position: fixed; top: 52px; right: 14px; width: 215px; max-height: 62vh; overflow-y: auto;
     background: rgba(18,20,24,.92); border: 1px solid #3a3d42; border-radius: 10px;
@@ -105,6 +109,12 @@
   <div class="btn" id="shotArea">Select area</div>
   <div class="btn" id="layersBtn">Layers</div>
 </div>
+<div id="viewbar">
+  <div class="btn" data-view="top">Top</div>
+  <div class="btn" data-view="side">Side</div>
+  <div class="btn" data-view="end">End</div>
+  <div class="btn" data-view="iso">Iso</div>
+</div>
 <div id="layers"><div class="lhead">Layers</div></div>
 <div id="annoOverlay"></div>
 <div id="loading">LOADING MODEL&hellip;</div>
@@ -167,9 +177,47 @@ gltfLoader.load('model.glb', (gltf) => {
   const el = document.getElementById('loading');
   el.style.opacity = '0';
   setTimeout(() => el.remove(), 600);
+
+  homeView = {
+    pos: camera.position.clone(), tgt: controls.target.clone(),
+    center: center.clone(), dist
+  };
 }, undefined, () => {
   document.getElementById('loading').textContent = 'FAILED TO LOAD MODEL';
 });
+
+/* ---------- view presets ---------- */
+
+let homeView = null;
+let _viewAnim = null;
+
+function setView(name) {
+  if (!homeView) return;
+  const { center, dist } = homeView;
+  const defs = {
+    top:  { pos: [center.x, center.y + dist, center.z + dist * 0.001], tgt: center.toArray() },
+    side: { pos: [24.6, 4.3, 8.0], tgt: [24.6, 4.2, -6.0] },
+    end:  { pos: [27.2, 4.0, 0], tgt: [6, 1.5, 0] },
+    iso:  { pos: homeView.pos.toArray(), tgt: homeView.tgt.toArray() },
+  };
+  const d = defs[name]; if (!d) return;
+  const p0 = camera.position.clone(), t0 = controls.target.clone();
+  const p1 = new THREE.Vector3(...d.pos), t1 = new THREE.Vector3(...d.tgt);
+  if (_viewAnim) cancelAnimationFrame(_viewAnim);
+  const tStart = performance.now(), dur = 450;
+  const step = now => {
+    const k = Math.min(1, (now - tStart) / dur), e = 1 - Math.pow(1 - k, 3);
+    camera.position.lerpVectors(p0, p1, e);
+    controls.target.lerpVectors(t0, t1, e);
+    controls.update();
+    if (k < 1) _viewAnim = requestAnimationFrame(step); else _viewAnim = null;
+  };
+  _viewAnim = requestAnimationFrame(step);
+  document.querySelectorAll('#viewbar .btn').forEach(b =>
+    b.classList.toggle('on', b.dataset.view === name));
+}
+document.querySelectorAll('#viewbar .btn').forEach(b =>
+  b.onclick = () => setView(b.dataset.view));
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
