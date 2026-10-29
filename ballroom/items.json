@@ -1,1 +1,65 @@
-[{"name": "Component#4", "count": 2, "faces": 120642, "layer": "(không rõ)"}, {"name": "Component#3", "count": 3, "faces": 73827, "layer": "(không rõ)"}, {"name": "Group#13", "count": 4, "faces": 13153, "layer": "(không rõ)"}, {"name": "Group#28", "count": 1, "faces": 42434, "layer": "(không rõ)"}, {"name": "05+BEAM+pls)", "count": 1, "faces": 24618, "layer": "(không rõ)"}, {"name": "Component#16", "count": 1, "faces": 23213, "layer": "(không rõ)"}, {"name": "Component#13", "count": 5, "faces": 3809, "layer": "(không rõ)"}, {"name": "Component#6", "count": 1, "faces": 15039, "layer": "(không rõ)"}, {"name": "Group#58", "count": 1, "faces": 14111, "layer": "(không rõ)"}, {"name": "Group#60", "count": 1, "faces": 14111, "layer": "(không rõ)"}, {"name": "Group#61", "count": 1, "faces": 14111, "layer": "(không rõ)"}, {"name": "Component#12", "count": 8, "faces": 640, "layer": "(không rõ)"}, {"name": "Prolyft+PLE", "count": 2, "faces": 2505, "layer": "(không rõ)"}, {"name": "Group#6", "count": 1, "faces": 1344, "layer": "(không rõ)"}, {"name": "Component#5", "count": 1, "faces": 1104, "layer": "(không rõ)"}, {"name": "Group#7", "count": 2, "faces": 516, "layer": "(không rõ)"}, {"name": "Component#2", "count": 1, "faces": 848, "layer": "(không rõ)"}, {"name": "Group#3", "count": 1, "faces": 516, "layer": "(không rõ)"}, {"name": "20b_Ballroom_Doors", "count": 1, "faces": 300, "layer": "20b_Ballroom_Doors"}, {"name": "Group#72", "count": 1, "faces": 266, "layer": "(không rõ)"}, {"name": "Group#49", "count": 1, "faces": 250, "layer": "Furniture"}, {"name": "TP_Hang_Rao_Duong_Xi", "count": 1, "faces": 198, "layer": "TP_Loi_Vao"}, {"name": "Group#9", "count": 1, "faces": 198, "layer": "(không rõ)"}, {"name": "Group460", "count": 1, "faces": 192, "layer": "TP_Loi_Vao"}, {"name": "40_Side_Foyer", "count": 1, "faces": 192, "layer": "40_Side_Foyer"}, {"name": "Group#48", "count": 1, "faces": 159, "layer": "Furniture"}, {"name": "65_Restrooms", "count": 1, "faces": 150, "layer": "65_Restrooms"}, {"name": "20_Ballroom_Walls", "count": 1, "faces": 144, "layer": "20_Ballroom_Walls"}, {"name": "Static_3", "count": 2, "faces": 68, "layer": "loa"}, {"name": "61_Song_Thao", "count": 1, "faces": 113, "layer": "61_Song_Thao"}, {"name": "61_Song_Da", "count": 1, "faces": 113, "layer": "61_Song_Da"}, {"name": "Sree", "count": 1, "faces": 110, "layer": "(không rõ)"}, {"name": "ThomThom", "count": 1, "faces": 98, "layer": "(không rõ)"}, {"name": "60_Meeting_Walls", "count": 1, "faces": 90, "layer": "60_Meeting_Walls"}, {"name": "SUB.dxf_2", "count": 4, "faces": 22, "layer": "loa"}, {"name": "61_Song_Lo", "count": 1, "faces": 83, "layer": "61_Song_Lo"}, {"name": "Group#1", "count": 1, "faces": 78, "layer": "(không rõ)"}, {"name": "Group#46", "count": 1, "faces": 78, "layer": "(không rõ)"}, {"name": "70_Stairwell", "count": 1, "faces": 72, "layer": "70_Stairwell"}, {"name": "Group#40", "count": 1, "faces": 72, "layer": "(không rõ)"}, {"name": "Group#71", "count": 1, "faces": 72, "layer": "(không rõ)"}, {"name": "30_Service", "count": 1, "faces": 68, "layer": "30_Service"}, {"name": "Group#43", "count": 1, "faces": 56, "layer": "(không rõ)"}, {"name": "Group#14", "count": 1, "faces": 48, "layer": "(không rõ)"}, {"name": "10_Floors", "count": 1, "faces": 29, "layer": "10_Floors"}, {"name": "Group_3", "count": 1, "faces": 24, "layer": "loa"}, {"name": "Group#21", "count": 1, "faces": 12, "layer": "(không rõ)"}, {"name": "Group#56", "count": 1, "faces": 6, "layer": "(không rõ)"}, {"name": "Group#2", "count": 1, "faces": 6, "layer": "(không rõ)"}, {"name": "Group#67", "count": 1, "faces": 6, "layer": "(không rõ)"}, {"name": "Group#70", "count": 1, "faces": 6, "layer": "(không rõ)"}, {"name": "Group#69", "count": 1, "faces": 6, "layer": "(không rõ)"}, {"name": "Group#38", "count": 1, "faces": 6, "layer": "(không rõ)"}, {"name": "Group#68", "count": 1, "faces": 6, "layer": "(không rõ)"}, {"name": "Group#73", "count": 1, "faces": 6, "layer": "(không rõ)"}, {"name": "Group#76", "count": 1, "faces": 2, "layer": "(không rõ)"}, {"name": "TP San/Tran", "count": 1, "faces": 1, "layer": "TP_San"}]
+[
+ {
+  "name": "Kết cấu & phần khác",
+  "layer": "Layer: L12, Layer0",
+  "count": 1,
+  "faces": 155944,
+  "detail": "ThomThom"
+ },
+ {
+  "name": "Tường, cửa, trần",
+  "layer": "Layer: 10_Floors, 20_Ballroom_Walls, 20b_Ballroom_Doors, 30_Service, 40_Side_Foyer, 60_Meeting_Walls …",
+  "count": 22,
+  "faces": 6336,
+  "detail": "door_jamb, door_leaf, TP_Hang_Rao_Duong_Xi, 20_Ballroom_Walls, tiang, door_head"
+ },
+ {
+  "name": "Thảm / sàn",
+  "layer": "Layer: TP_San, TP_Zones",
+  "count": 1,
+  "faces": 596,
+  "detail": "TP San/Tran"
+ },
+ {
+  "name": "Truss (trong venue)",
+  "layer": "Layer: Layer0",
+  "count": 4,
+  "faces": 16000,
+  "detail": "3.0m Truss, Leg 3.0m, 1.0m Truss, Leg 1.0m"
+ },
+ {
+  "name": "Đèn",
+  "layer": "Layer: 1 K15, 1 MEGA POITE, 1 STROBE LED, 1 blinder 4x, Layer0",
+  "count": 7,
+  "faces": 26008,
+  "detail": "Clay Paky Hy B-Eye K15, Robe Robin MegaPointe, tripod casters, fresnel tripod  w casters, fresnel tripod  3z, JDL LED Strobe 8 Clusters RGB+S"
+ },
+ {
+  "name": "Loa",
+  "layer": "Layer: Layer0, Top Reinforcement, loa",
+  "count": 4,
+  "faces": 5485,
+  "detail": "05+BEAM+pls), Prolyft+PLE, imagen, image"
+ },
+ {
+  "name": "Ghế",
+  "layer": "Layer: Furniture, TP_Loi_Vao",
+  "count": 4,
+  "faces": 16393,
+  "detail": "kursi skirting, kaki, TP_Ghe_Bar_Chrome, TP_Ghe_Den"
+ },
+ {
+  "name": "Bàn",
+  "layer": "Layer: Furniture, TP_Loi_Vao",
+  "count": 2,
+  "faces": 1495,
+  "detail": "TP_Ban_Cocktail_Trang, Catering Table, Skirted"
+ },
+ {
+  "name": "Nội thất khác (TV, kệ…)",
+  "layer": "Layer: Furniture",
+  "count": 5,
+  "faces": 4075,
+  "detail": "AVS-002-A0, AVS-002-AS, AVS-002-17, TV+with+standing+bracket, TV_FlatScreen_42in"
+ }
+]

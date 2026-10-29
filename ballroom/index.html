@@ -97,7 +97,7 @@ input[type="search"] {
     <h2>Đối tượng trong model</h2>
     <input type="search" id="filter" placeholder="Lọc theo tên, ví dụ Component, Group, Furniture" aria-label="Lọc đối tượng">
     <ul class="list" id="list"></ul>
-    <p class="note">Mỗi dòng là một cụm đối tượng đặt trong model. Số lần là số bản đặt, số mặt là số mặt của một bản.</p>
+    <p class="note">Mỗi dòng là một layer gộp theo loại (ghế, bàn, đèn, truss, loa, tường, thảm…), không dùng component. Truss chỉ giữ phần nằm trong venue. Số mục là số nhóm đối tượng gốc, số mặt là số mặt sau khi làm gọn.</p>
   </aside>
 </main>
 
@@ -129,12 +129,12 @@ input[type="search"] {
       nm.textContent = it.name;
       var sub = document.createElement('div');
       sub.className = 'sub';
-      sub.textContent = 'Layer: ' + it.layer;
+      sub.textContent = it.layer + (it.detail ? ' · ' + it.detail : '');
       left.appendChild(nm);
       left.appendChild(sub);
       var right = document.createElement('div');
       right.className = 'num';
-      right.textContent = '× ' + fmt(it.count) + ' · ' + fmt(it.faces) + ' mặt';
+      right.textContent = fmt(it.count) + ' mục · ' + fmt(it.faces) + ' mặt';
       li.appendChild(left);
       li.appendChild(right);
       listEl.appendChild(li);
@@ -150,8 +150,8 @@ input[type="search"] {
   function loadItems() {
     fetch('items.json').then(function (r) { return r.json(); }).then(function (data) {
       items = data;
-      var total = data.reduce(function (s, it) { return s + it.count; }, 0);
-      summaryEl.textContent = fmt(data.length) + ' nhóm · ' + fmt(total) + ' bản đặt';
+      var total = data.reduce(function (s, it) { return s + it.faces; }, 0);
+      summaryEl.textContent = fmt(data.length) + ' layer · ' + fmt(total) + ' mặt';
       renderList();
     }).catch(function () {
       summaryEl.textContent = 'Không đọc được danh sách đối tượng';
