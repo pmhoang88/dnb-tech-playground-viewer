@@ -171,14 +171,19 @@ input[type="search"] {
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   var scene = new THREE.Scene();
-  scene.background = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#0b0c0e');
+  // Nền cố định sáng để mô hình tối màu vẫn nhìn thấy, kể cả khi máy bật chế độ tối.
+  scene.background = new THREE.Color('#e6e1d4');
   var camera = new THREE.PerspectiveCamera(45, 1, 1, 1e7);
   var controls = new THREE.OrbitControls(camera, canvas);
   controls.enableDamping = true;
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.9));
-  var sun = new THREE.DirectionalLight(0xffffff, 0.6);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x888888, 1.2));
+  var sun = new THREE.DirectionalLight(0xffffff, 1.0);
   sun.position.set(1, 2, 1.5);
   scene.add(sun);
+  var sun2 = new THREE.DirectionalLight(0xffffff, 0.6);
+  sun2.position.set(-1, 1, -1.2);
+  scene.add(sun2);
 
   var home = { pos: new THREE.Vector3(), target: new THREE.Vector3(), dist: 1 };
   var box = null;
@@ -239,6 +244,12 @@ input[type="search"] {
     loader.parse(buf, '', onLoaded, onFail);
   }).catch(onFail);
   function onLoaded(gltf) {
+    gltf.scene.traverse(function (o) {
+      if (o.isMesh && o.material) {
+        var mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach(function (mt) { mt.side = THREE.DoubleSide; mt.roughness = 0.8; mt.metalness = 0; mt.needsUpdate = true; });
+      }
+    });
     scene.add(gltf.scene);
     box = new THREE.Box3().setFromObject(gltf.scene);
     fitView(box);
