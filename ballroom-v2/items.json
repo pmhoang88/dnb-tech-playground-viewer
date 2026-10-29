@@ -1,0 +1,65 @@
+[
+ {
+  "name": "Kết cấu & phần khác",
+  "layer": "Layer: L12, Layer0",
+  "count": 1,
+  "faces": 155831,
+  "detail": "ThomThom"
+ },
+ {
+  "name": "Tường, cửa, trần",
+  "layer": "Layer: 10_Floors, 20_Ballroom_Walls, 20b_Ballroom_Doors, 30_Service, 40_Side_Foyer, 60_Meeting_Walls …",
+  "count": 22,
+  "faces": 6337,
+  "detail": "door_jamb, door_leaf, 20_Ballroom_Walls, TP_Hang_Rao_Duong_Xi, tiang, door_head"
+ },
+ {
+  "name": "Thảm / sàn",
+  "layer": "Layer: TP_San, TP_Zones",
+  "count": 1,
+  "faces": 596,
+  "detail": "TP San/Tran"
+ },
+ {
+  "name": "Truss (trong venue)",
+  "layer": "Layer: Layer0",
+  "count": 4,
+  "faces": 16000,
+  "detail": "3.0m Truss, Leg 3.0m, 1.0m Truss, Leg 1.0m"
+ },
+ {
+  "name": "Đèn",
+  "layer": "Layer: 1 K15, 1 MEGA POITE, 1 STROBE LED, 1 blinder 4x, Layer0",
+  "count": 7,
+  "faces": 26007,
+  "detail": "Clay Paky Hy B-Eye K15, Robe Robin MegaPointe, tripod casters, fresnel tripod  w casters, fresnel tripod  3z, JDL LED Strobe 8 Clusters RGB+S"
+ },
+ {
+  "name": "Loa",
+  "layer": "Layer: Layer0, Top Reinforcement, loa",
+  "count": 4,
+  "faces": 5485,
+  "detail": "05+BEAM+pls), Prolyft+PLE, imagen, image"
+ },
+ {
+  "name": "Ghế",
+  "layer": "Layer: Furniture, TP_Loi_Vao",
+  "count": 4,
+  "faces": 16393,
+  "detail": "kursi skirting, kaki, TP_Ghe_Bar_Chrome, TP_Ghe_Den"
+ },
+ {
+  "name": "Bàn",
+  "layer": "Layer: Furniture, TP_Loi_Vao",
+  "count": 2,
+  "faces": 1495,
+  "detail": "TP_Ban_Cocktail_Trang, Catering Table, Skirted"
+ },
+ {
+  "name": "Nội thất khác (TV, kệ…)",
+  "layer": "Layer: Furniture",
+  "count": 5,
+  "faces": 4075,
+  "detail": "AVS-002-A0, AVS-002-AS, AVS-002-17, TV+with+standing+bracket, TV_FlatScreen_42in"
+ }
+]

@@ -1,0 +1,262 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tech Playground Ballroom v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: 3D view on top, object list below on phones; side by side on wide screens. */
+/* Palette: ink background, warm paper text, amber accent for the single active control. */
+:root {
+  --bg: #f4f1ea;
+  --panel: #ffffff;
+  --fg: #1d1f22;
+  --muted: #6b6f76;
+  --line: #d9d5cb;
+  --accent: #b8591a;
+  --stage: #e6e1d4;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111315;
+    --panel: #1a1d21;
+    --fg: #ece8df;
+    --muted: #9b9fa6;
+    --line: #2c3036;
+    --accent: #f0893a;
+    --stage: #0b0c0e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111315;
+  --panel: #1a1d21;
+  --fg: #ece8df;
+  --muted: #9b9fa6;
+  --line: #2c3036;
+  --accent: #f0893a;
+  --stage: #0b0c0e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.5 "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px;
+}
+header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+h1 { font-size: 22px; font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.meta { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+main { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { main { grid-template-columns: minmax(0, 1fr) 360px; } }
+.stage { position: relative; background: var(--stage); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; height: 62vh; min-height: 320px; max-width: 100%; }
+@media (max-width: 600px) { .stage { height: 52vh; } }
+#view { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#status { position: absolute; left: 12px; top: 10px; color: var(--muted); font-size: 13px; pointer-events: none; }
+#status.err { color: var(--accent); }
+.toolbar { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 8px; }
+button {
+  font: inherit; font-size: 13px; color: var(--fg); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+aside h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0; font-weight: 600; }
+input[type="search"] {
+  width: 100%; font: inherit; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 4px; padding: 7px 10px;
+}
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; overflow: auto; max-height: 52vh; min-width: 0; }
+.list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--line); min-width: 0; }
+.list li:first-child { border-top: 0; }
+.name { overflow-wrap: anywhere; font-weight: 500; }
+.sub { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.num { color: var(--muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.empty { color: var(--muted); font-size: 13px; }
+.note { color: var(--muted); font-size: 12px; margin: 0; }
+</style>
+
+<header>
+  <h1>Tech Playground Ballroom</h1>
+  <div class="meta" id="summary">Đang tải…</div>
+</header>
+
+<main>
+  <section class="stage" aria-label="Mô hình 3D">
+    <canvas id="view"></canvas>
+    <div id="status">Đang tải mô hình (khoảng 2 MB)…</div>
+    <div class="toolbar">
+      <button type="button" id="reset">Về góc nhìn ban đầu</button>
+    </div>
+  </section>
+
+  <aside>
+    <h2>Đối tượng trong model</h2>
+    <input type="search" id="filter" placeholder="Lọc theo tên, ví dụ Component, Group, Furniture" aria-label="Lọc đối tượng">
+    <ul class="list" id="list"></ul>
+    <p class="note">Mỗi dòng là một layer gộp theo loại (ghế, bàn, đèn, truss, loa, tường, thảm…), không dùng component. Truss chỉ giữ phần nằm trong venue. Số mục là số nhóm đối tượng gốc, số mặt là số mặt sau khi làm gọn.</p>
+  </aside>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script>
+(function () {
+  var statusEl = document.getElementById('status');
+  var summaryEl = document.getElementById('summary');
+  var listEl = document.getElementById('list');
+  var filterEl = document.getElementById('filter');
+  var canvas = document.getElementById('view');
+  var items = [];
+
+  function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
+
+  function renderList() {
+    var q = (filterEl.value || '').trim().toLowerCase();
+    listEl.textContent = '';
+    var shown = 0;
+    items.forEach(function (it) {
+      if (q && it.name.toLowerCase().indexOf(q) === -1 && it.layer.toLowerCase().indexOf(q) === -1) return;
+      shown++;
+      var li = document.createElement('li');
+      var left = document.createElement('div');
+      var nm = document.createElement('div');
+      nm.className = 'name';
+      nm.textContent = it.name;
+      var sub = document.createElement('div');
+      sub.className = 'sub';
+      sub.textContent = it.layer + (it.detail ? ' · ' + it.detail : '');
+      left.appendChild(nm);
+      left.appendChild(sub);
+      var right = document.createElement('div');
+      right.className = 'num';
+      right.textContent = fmt(it.count) + ' mục · ' + fmt(it.faces) + ' mặt';
+      li.appendChild(left);
+      li.appendChild(right);
+      listEl.appendChild(li);
+    });
+    if (!shown) {
+      var e = document.createElement('li');
+      e.className = 'empty';
+      e.textContent = 'Không có đối tượng khớp.';
+      listEl.appendChild(e);
+    }
+  }
+
+  function loadItems() {
+    fetch('items.json').then(function (r) { return r.json(); }).then(function (data) {
+      items = data;
+      var total = data.reduce(function (s, it) { return s + it.faces; }, 0);
+      summaryEl.textContent = fmt(data.length) + ' layer · ' + fmt(total) + ' mặt';
+      renderList();
+    }).catch(function () {
+      summaryEl.textContent = 'Không đọc được danh sách đối tượng';
+    });
+  }
+
+  if (typeof THREE === 'undefined' || !THREE.GLTFLoader || !THREE.OrbitControls) {
+    statusEl.textContent = 'Không tải được thư viện 3D. Kiểm tra kết nối rồi tải lại trang.';
+    statusEl.className = 'err';
+    loadItems();
+    return;
+  }
+
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#0b0c0e');
+  var camera = new THREE.PerspectiveCamera(45, 1, 1, 1e7);
+  var controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.9));
+  var sun = new THREE.DirectionalLight(0xffffff, 0.6);
+  sun.position.set(1, 2, 1.5);
+  scene.add(sun);
+
+  var home = { pos: new THREE.Vector3(), target: new THREE.Vector3(), dist: 1 };
+  var box = null;
+
+  function resize() {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function fitView(b) {
+    var c = b.getCenter(new THREE.Vector3());
+    var size = b.getSize(new THREE.Vector3());
+    var r = Math.max(size.x, size.y, size.z) * 0.5 || 1;
+    var dist = r / Math.sin((camera.fov * Math.PI / 180) / 2) * 0.9;
+    home.target.copy(c);
+    home.pos.set(c.x + dist * 0.6, c.y + dist * 0.8, c.z + dist * 0.6);
+    home.dist = dist;
+    camera.near = Math.max(dist / 1000, 0.1);
+    camera.far = dist * 20;
+    camera.updateProjectionMatrix();
+    controls.target.copy(home.target);
+    camera.position.copy(home.pos);
+    controls.update();
+  }
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!box) return;
+    camera.position.copy(home.pos);
+    controls.target.copy(home.target);
+    controls.update();
+  });
+
+  var loader = new THREE.GLTFLoader();
+  function b64ToBytes(b64) {
+    var bin = atob(b64);
+    var out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  fetch('model.json').then(function (r) { return r.json(); }).then(function (d) {
+    statusEl.textContent = 'Đang giải nén mô hình…';
+    var bytes = b64ToBytes(d.glb_gzip_base64);
+    if (typeof DecompressionStream !== 'undefined' && typeof Blob !== 'undefined' && Blob.prototype.stream && typeof Response !== 'undefined') {
+      try {
+        var gz = new Blob([bytes]);
+        return new Response(gz.stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+      } catch (e) { /* fall through to pako */ }
+    }
+    if (typeof pako === 'undefined') throw new Error('no gzip decoder');
+    return pako.ungzip(bytes).buffer;
+  }).then(function (buf) {
+    statusEl.textContent = 'Đang dựng mô hình…';
+    loader.parse(buf, '', onLoaded, onFail);
+  }).catch(onFail);
+  function onLoaded(gltf) {
+    scene.add(gltf.scene);
+    box = new THREE.Box3().setFromObject(gltf.scene);
+    fitView(box);
+    statusEl.textContent = '';
+    loadItems();
+  }
+  function onFail(err) {
+    statusEl.textContent = 'Không mở được dữ liệu mô hình' + (err && err.message ? ' (' + err.message + ')' : '');
+    statusEl.className = 'err';
+    loadItems();
+  }
+
+  filterEl.addEventListener('input', renderList);
+
+  (function tick() {
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  })();
+})();
+</script>
