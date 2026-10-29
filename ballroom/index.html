@@ -1,4 +1,6 @@
 <!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tech Playground Ballroom</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -53,7 +55,7 @@ main { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 900px) { main { grid-template-columns: minmax(0, 1fr) 360px; } }
 .stage { position: relative; background: var(--stage); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; height: 62vh; min-height: 320px; max-width: 100%; }
 @media (max-width: 600px) { .stage { height: 52vh; } }
-#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#view { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 #status { position: absolute; left: 12px; top: 10px; color: var(--muted); font-size: 13px; pointer-events: none; }
 #status.err { color: var(--accent); }
 .toolbar { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 8px; }
@@ -104,6 +106,7 @@ input[type="search"] {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 <script>
 (function () {
   var statusEl = document.getElementById('status');
@@ -222,8 +225,15 @@ input[type="search"] {
   }
   fetch('model.json').then(function (r) { return r.json(); }).then(function (d) {
     statusEl.textContent = 'Đang giải nén mô hình…';
-    var gz = new Blob([b64ToBytes(d.glb_gzip_base64)]);
-    return new Response(gz.stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+    var bytes = b64ToBytes(d.glb_gzip_base64);
+    if (typeof DecompressionStream !== 'undefined' && typeof Blob !== 'undefined' && Blob.prototype.stream && typeof Response !== 'undefined') {
+      try {
+        var gz = new Blob([bytes]);
+        return new Response(gz.stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+      } catch (e) { /* fall through to pako */ }
+    }
+    if (typeof pako === 'undefined') throw new Error('no gzip decoder');
+    return pako.ungzip(bytes).buffer;
   }).then(function (buf) {
     statusEl.textContent = 'Đang dựng mô hình…';
     loader.parse(buf, '', onLoaded, onFail);
@@ -235,8 +245,8 @@ input[type="search"] {
     statusEl.textContent = '';
     loadItems();
   }
-  function onFail() {
-    statusEl.textContent = 'Không mở được dữ liệu mô hình';
+  function onFail(err) {
+    statusEl.textContent = 'Không mở được dữ liệu mô hình' + (err && err.message ? ' (' + err.message + ')' : '');
     statusEl.className = 'err';
     loadItems();
   }
