@@ -1,0 +1,79 @@
+[
+ {
+  "name": "Kết cấu & phần khác",
+  "layer": "Layer: L12, Layer0",
+  "count": 1,
+  "faces": 12996,
+  "detail": "ThomThom"
+ },
+ {
+  "name": "Tường, cửa, trần",
+  "layer": "Layer: 10_Floors, 20_Ballroom_Walls, 20b_Ballroom_Doors, 30_Service, 40_Side_Foyer, Furniture …",
+  "count": 9,
+  "faces": 6120,
+  "detail": "20_Ballroom_Walls, tiang, door_jamb, door_leaf, 30_Service, 40_Side_Foyer"
+ },
+ {
+  "name": "Thảm / sàn",
+  "layer": "Layer: TP_San, TP_Zones",
+  "count": 1,
+  "faces": 1998,
+  "detail": "TP San/Tran"
+ },
+ {
+  "name": "Truss (trong venue)",
+  "layer": "Layer: Layer0",
+  "count": 4,
+  "faces": 29120,
+  "detail": "3.0m Truss, Leg 3.0m, 1.0m Truss, Leg 1.0m"
+ },
+ {
+  "name": "Đèn",
+  "layer": "Layer: 1 K15, 1 STROBE LED, Layer0",
+  "count": 5,
+  "faces": 29039,
+  "detail": "Clay Paky Hy B-Eye K15, tripod casters, fresnel tripod  w casters, fresnel tripod  3z, JDL LED Strobe 8 Clusters RGB+S"
+ },
+ {
+  "name": "Loa",
+  "layer": "Layer: CabinetsMainArray, CabinetsMainArray_L, Layer0, Top Reinforcement, loa",
+  "count": 3,
+  "faces": 4835,
+  "detail": "05+BEAM+pls), Tech Playground Hanoi_V3.2_HP_301026_all.dxf, imagen"
+ },
+ {
+  "name": "Rack ampli D90",
+  "layer": "Layer: D90 rack",
+  "count": 19,
+  "faces": 4640,
+  "detail": "Chu: D90, Banh xe, Rack d&b 3 x D90 (600x715x710), Tay xach, Goc, Tam banh"
+ },
+ {
+  "name": "Tag U5",
+  "layer": "Layer: U5",
+  "count": 26,
+  "faces": 4544,
+  "detail": "3dSolid 43, 3dSolid 54, 3dSolid 50, 3dSolid 61, 3dSolid 62, 3dSolid 60"
+ },
+ {
+  "name": "Ghế",
+  "layer": "Layer: Furniture, TP_Loi_Vao",
+  "count": 3,
+  "faces": 24994,
+  "detail": "kursi skirting, kaki, TP_Ghe_Den"
+ },
+ {
+  "name": "Bàn",
+  "layer": "Layer: Furniture, TP_Loi_Vao",
+  "count": 2,
+  "faces": 4998,
+  "detail": "TP_Ban_Cocktail_Trang, Catering Table, Skirted"
+ },
+ {
+  "name": "Nội thất khác (TV, kệ…)",
+  "layer": "Layer: Furniture",
+  "count": 5,
+  "faces": 7683,
+  "detail": "AVS-002-A0, AVS-002-AS, AVS-002-17, TV+with+standing+bracket, TV_FlatScreen_42in"
+ }
+]
